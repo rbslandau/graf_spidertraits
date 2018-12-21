@@ -1,5 +1,5 @@
-# R Script Graf_et_al_2018_R: R-Code
-# Nadin Graf, Karina Battes, Mirela Cimpean, Pitt Dittrich,
+# R Script Graf_et_al_2018_R_revised: R-Code
+# Nadin Graf, Karina P. Battes, Mirela Cimpean, Pitt Dittrich,
 # Martin H. Entling, Moritz Link, Andreas Scharmüller, Verena C. Schreiner,
 # Eduard Szöcs, Ralf B. Schäfer
 #----------------------------------------------------------------------------------------
@@ -38,10 +38,11 @@
 # 4.5 # test for shading preference -----------
 # 4.6 # test for moisture preference ----------
 # 4.7 # test for specilisation ----------------
-# 4.8 # combine plots -------------------------
+# 4.8 test for web  builder -------------------
+# 4.9 # combine plots -------------------------
 #----------------------------------------------
 
-setwd("C:/Users/N/PhD/Digital/Rumänien/trait/txt/Draft/attach")
+setwd("XXX")
 
 #### 1. ENVIRONMENTAL DATA SPCA ####
 
@@ -130,21 +131,21 @@ expl
 summary(expl)
 set.seed(222)
 anova(expl, by = "terms")
+anova(expl, by ='axis')
 
 set.seed(1000)
 specno <- specnumber(spe, MARGIN = 2)
-svg(filename = "rdaplotall.svg", width = 10, height = 8, pointsize = 12)
+svg(filename = "rdaplotall_review.svg", width = 10, height = 8, pointsize = 12)
 plot(expl,
-  type = "n", scaling = 1,
+  type = "n", scaling = 2,
   xlab = "RDA1 (12.9% of total variance)", ylab = "RDA2 (8.5% of total variance)", las = 1, xlim = c(-1, 1), ylim = c(-1.5, 1)
 )
-orditorp(expl, scaling = 1, cex = 1, display = "sites", col = "grey20")
 orditorp(expl,
   scaling = 1, cex = 1, display = "species", col = "darkred", priority = specno,
   air = 2, pch = "+"
 )
 ef <- envfit(expl, env)
-plot(ef, col = "darkcyan")
+plot(ef, col = "cornflower blue")
 dev.off()
 
 #### 2.1 RDA tox ####
@@ -160,6 +161,13 @@ plot(tox)
 
 sort(scores(tox)$species[, 1])
 
+tox1 <- rda(
+  formula = spe ~ max_sumTU_ms + Condition(Comp.1 + Comp.2),
+  data = env, scale = TRUE
+)
+set.seed(1000)
+anova(tox1, by = "terms")
+
 
 #### 3. CWM ####
 library(FD)
@@ -170,6 +178,7 @@ identical(row.names(trait), row.names(t(spe))) # identical
 
 ex1 <- dbFD(trait, spe, corr = "lingoes") # lingoes
 ex1 # warnings due to rows with the same values
+#write.csv(ex1, file = "cwm.csv")
 
 #### 4. CORRELATIONS ####
 
@@ -283,6 +292,7 @@ ind <- ggplot(tr_df, aes(y = fit, x = max_sumTU_ms)) +
     panel.border = element_rect(colour = "black", fill = NA, size = 0.5),
     legend.position = "none"
   ) +
+  ylim(NA, 200) +
   xlim(NA, 0.1)
 ind
 
@@ -334,7 +344,9 @@ siz <- ggplot(tr_df, aes(y = fit, x = shading)) +
     panel.background = element_rect(fill = "white"),
     panel.border = element_rect(colour = "black", fill = NA, size = 0.5),
     legend.position = "none"
-  )
+  ) +
+  ylim(NA, 7) +
+  xlim(NA, 100)
 siz
 
 
@@ -450,6 +462,10 @@ summary(nic1.4)
 summary(glm(CWM.Niche ~ CWM.Ballon1, data, family = "gaussian"))
 1 - (0.00095269 / 0.00133139) # D²=0.2844396
 
+summary(glm(CWM.Niche ~ no3, data, family = "gaussian"))
+summary(glm(CWM.Niche ~ po4, data, family = "gaussian"))
+summary(glm(CWM.Niche ~ totalarea, data, family = "gaussian"))
+
 range(data$Comp.2, na.rm = TRUE)
 df <- data.frame(Comp.2 = seq(-1.670808, 3.075343, length.out = 10)) # ,
 
@@ -484,10 +500,66 @@ nic <- ggplot(tr_df, aes(y = fit, x = Comp.2)) +
 nic
 
 
-#### 4.8 combine plots #####
+#### 4.8 test for web  builder  #####
+
+web1.1 <- glm(CWM.web1 ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+summary(web1.1)
+drop1(web1.1, test = "F") #-> exclude Comp.1
+
+web1.2 <- glm(CWM.web1 ~ Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+summary(web1.2)
+drop1(web1.2, test = "F") #-> exclude Comp.2
+
+web1.3 <- glm(CWM.web1 ~ max_sumTU_ms + shading, data, family = "gaussian")
+summary(web1.3)
+drop1(web1.3, test = "F") #-> exclude tox
+
+web1.4 <- glm(CWM.web1 ~ shading, data, family = "gaussian")
+summary(web1.4)
+drop1(web1.4, test = "F")
+1 - (0.56494 / 0.87031) # D²=0.350875
+
+range(data$shading, na.rm = TRUE)
+df <- data.frame(shading = seq(0, 95, length.out = 10)) # ,
+
+p_df <- predict(web1.4,
+  newdata = df,
+  type = "response",
+  se.fit = TRUE
+)
+tr_df <- transform(df,
+  fit = p_df$fit,
+  lwr = p_df$fit - (1.96 * p_df$se.fit),
+  upr = p_df$fit + (1.96 * p_df$se.fit)
+)
+web <- ggplot(tr_df, aes(y = fit, x = shading)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.2) +
+  geom_line() +
+  geom_point(data = data, aes(y = CWM.web1, x = shading), size = 2) +
+  labs(
+    x = expression("shading [%]"),
+    y = expression("CWM for web builder")
+  ) +
+  theme(
+    axis.title.x = element_text(colour = "black", size = 16),
+    axis.title.y = element_text(colour = "black", size = 16),
+    axis.text.x = element_text(colour = "black", size = 11),
+    axis.text.y = element_text(colour = "black", size = 11),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    panel.border = element_rect(colour = "black", fill = NA, size = 0.5),
+    legend.position = "none"
+  ) +
+  ylim(-1, 0.2) +
+  xlim(NA, 100)
+web
+
+
+#### 4.9 combine plots #####
 library(cowplot)
-res <- plot_grid(spe, ind, siz, sha, nic,
-  labels = c("A", "B", "C", "D", "E"),
+res <- plot_grid(spe, ind, siz, sha, nic, web,
+  labels = c("A", "B", "C", "D", "E", "F"),
   align = "v", nrow = 3, ncol = 2
 )
 res
+

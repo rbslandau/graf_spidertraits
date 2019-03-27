@@ -36,7 +36,11 @@
 # - slight changes in explained variance, p-values and correlations 		 #
 # that did not impact any of the interpretations							 #
 # - model for ballooning is now statistically significant, hence displays the#
-# estimated relationship with toxicity
+# estimated relationship with toxicity										 #
+# For reproducing the original version of the paper, use the variable 		 #
+# max_sumTU_ms instead of max_sumTU_ms_corr in the models (needs slight 	 #
+# adjustment of the code)													 #
+##############################################################################
 
 #######################
 #      Structure      #

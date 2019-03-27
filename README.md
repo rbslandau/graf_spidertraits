@@ -1,7 +1,7 @@
 Repo for the publication "Do agricultural pesticides in streams affect riparian spiders?"
 ====================================================================================================================
 
-This repo contains the script and data for the related manuscript under review.
+This repo contains the script and data for the related manuscript published in [Science of the Total Environment](https://www.sciencedirect.com/science/article/pii/S004896971835263X?via%3Dihub)
 
 Script written by Nadin Graf, revised by Moritz Link and Ralf B. Schäfer
   

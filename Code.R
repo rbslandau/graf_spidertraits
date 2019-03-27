@@ -1,7 +1,7 @@
 # R Script Graf_et_al_2018_R_revised: R-Code
 # Nadin Graf, Karina P. Battes, Mirela Cimpean, Pitt Dittrich,
-# Martin H. Entling, Moritz Link, Andreas Scharmüller, Verena C. Schreiner,
-# Eduard Szöcs, Ralf B. Schäfer
+# Martin H. Entling, Moritz Link, Andreas ScharmÃ¼ller, Verena C. Schreiner,
+# Eduard SzÃ¶cs, Ralf B. SchÃ¤fer
 #----------------------------------------------------------------------------------------
 # Do agricultural pesticides in streams affect riparian spiders?
 #----------------------------------------------------------------------------------------
@@ -15,10 +15,28 @@
 # GERMANY
 # graf-nadin@uni-landau.de
 
-# Revised by Moritz Link and Ralf B. Schäfer
+# Revised by Moritz Link and Ralf B. SchÃ¤fer
 
 # The code has been written to reproduce
 # See 'attachment' for details
+
+### Update March 27 2019 ##############################################################
+# This script has been updated because of an error in the EPA Ecotox database         #
+# The database incorrectly reported a value for atrazine a factor of 1000 too low     #
+# EC50 for Deleatidium sp. is 0.6 mg/L not 0.6 Âµg/L as reported in the ECOTOX 		  #
+# database (version December 2018) 													  #
+# see Boonthai C., Scott R.R. & Chapman R.B. (2000). Acetylcholinesterase as a 		  #
+# biomarker to assess the effect of chlorpyrifos and atrazine on some New Zealand 	  #
+# aquatic invertebrates. Australasian Journal of Ecotoxicology 6, 59â€“64				  #
+#######################################################################################
+
+##### Changes in Graf et al. 2019  ###########################################
+# The change has no impact on any of the results reported and conclusions 	 #
+# drawn in our publication, except for negligible changes:					 #
+# - slight changes in explained variance, p-values and correlations 		 #
+# that did not impact any of the interpretations							 #
+# - model for ballooning is now statistically significant, hence displays the#
+# estimated relationship with toxicity
 
 #######################
 #      Structure      #
@@ -42,7 +60,7 @@
 # 4.9 # combine plots -------------------------
 #----------------------------------------------
 
-setwd("XXX")
+setwd("~/Gitprojects/Publications/graf_spidertraits")
 
 #### 1. ENVIRONMENTAL DATA SPCA ####
 
@@ -107,7 +125,7 @@ load_spcD1 <- scores(spc_D1, choices = 1, display = "species", scaling = 0)
 pca_axes_D1 <- data.frame(vegan::scores(spc_D1, disp = "sites", choices = c(1:ncol(lu_dat)), scaling = "sites"))
 pca_axes_D1$site <- lu_data$site
 pca_axes_D1
-# write.csv(pca_axes_D1, 'C:/Users/N/PhD/Digital/Rumänien/trait/txt/SPC_axis.csv', row.names = FALSE)
+# write.csv(pca_axes_D1, 'C:/Users/N/PhD/Digital/RumÃ¤nien/trait/txt/SPC_axis.csv', row.names = FALSE)
 par(mfrow = c(1, 1))
 biplot(spc_D1)
 
@@ -126,7 +144,7 @@ rownames(spe) <- c("A", "B", "C", "E", "F", "G", "H", "I", "K", "L", "N", "O", "
 names(spe)
 
 set.seed(1000)
-expl <- rda(formula = spe ~ max_sumTU_ms + shading + Comp.1 + Comp.2, data = env, scale = TRUE)
+expl <- rda(formula = spe ~ max_sumTU_ms_corr + shading + Comp.1 + Comp.2, data = env, scale = TRUE)
 expl
 summary(expl)
 set.seed(222)
@@ -138,7 +156,7 @@ specno <- specnumber(spe, MARGIN = 2)
 svg(filename = "rdaplotall_review.svg", width = 10, height = 8, pointsize = 12)
 plot(expl,
   type = "n", scaling = 2,
-  xlab = "RDA1 (12.9% of total variance)", ylab = "RDA2 (8.5% of total variance)", las = 1, xlim = c(-1, 1), ylim = c(-1.5, 1)
+  xlab = "RDA1 (11% of total variance)", ylab = "RDA2 (7% of total variance)", las = 1, xlim = c(-1, 1), ylim = c(-1.5, 1)
 )
 orditorp(expl,
   scaling = 1, cex = 1, display = "species", col = "darkred", priority = specno,
@@ -151,7 +169,7 @@ dev.off()
 #### 2.1 RDA tox ####
 set.seed(1000)
 tox <- rda(
-  formula = spe ~ max_sumTU_ms + Condition(shading + Comp.1 + Comp.2),
+  formula = spe ~ max_sumTU_ms_corr + Condition(shading + Comp.1 + Comp.2),
   data = env, scale = TRUE
 )
 summary(tox)
@@ -162,7 +180,7 @@ plot(tox)
 sort(scores(tox)$species[, 1])
 
 tox1 <- rda(
-  formula = spe ~ max_sumTU_ms + Condition(Comp.1 + Comp.2),
+  formula = spe ~ max_sumTU_ms_corr + Condition(Comp.1 + Comp.2),
   data = env, scale = TRUE
 )
 set.seed(1000)
@@ -187,30 +205,30 @@ library(vegan)
 # correlaton between explanatories
 cor.test(data$Comp.1, data$Comp.2)
 cor.test(data$Comp.1, data$shading)
-cor.test(data$Comp.1, data$max_sumTU_ms)
+cor.test(data$Comp.1, data$max_sumTU_ms_corr)
 cor.test(data$Comp.2, data$shading)
-cor.test(data$Comp.2, data$max_sumTU_ms)
-cor.test(data$shading, data$max_sumTU_ms)
+cor.test(data$Comp.2, data$max_sumTU_ms_corr)
+cor.test(data$shading, data$max_sumTU_ms_corr)
 
 #### 4.1 test for number of spiders #####
-sp2.1 <- glm(spe ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "poisson")
+sp2.1 <- glm(spe ~ Comp.1 + Comp.2 + max_sumTU_ms_corr + shading, data, family = "poisson")
 summary(sp2.1)
 drop1(sp2.1, test = "Chi") #-> exclude Comp.1
 
-sp2.2 <- glm(spe ~ Comp.2 + max_sumTU_ms + shading, data, family = "poisson")
+sp2.2 <- glm(spe ~ Comp.2 + max_sumTU_ms_corr + shading, data, family = "poisson")
 summary(sp2.2)
 drop1(sp2.2, test = "Chi") #-> exclude comp2
 
-sp2.3 <- glm(spe ~ shading + max_sumTU_ms, data, family = "poisson")
+sp2.3 <- glm(spe ~ shading + max_sumTU_ms_corr, data, family = "poisson")
 summary(sp2.3)
 drop1(sp2.3, test = "Chi") #-> exclude shading
 
-sp2.4 <- glm(spe ~ max_sumTU_ms, data, family = "poisson")
+sp2.4 <- glm(spe ~ max_sumTU_ms_corr, data, family = "poisson")
 summary(sp2.4)
-1 - (8.7117 / 14.4198) #-> D²=0.3958515
+1 - (8.6051 / 14.4198) #-> DÂ² = 0.40
 
-range(data$max_sumTU_ms, na.rm = TRUE)
-df <- data.frame(max_sumTU_ms = seq(-1.591132, 0.047487, length.out = 10))
+range(data$max_sumTU_ms_corr, na.rm = TRUE)
+df <- data.frame(max_sumTU_ms_corr = seq(-1.62549514, -0.01420084, length.out = 10))
 p_df <- predict(sp2.4,
   newdata = df,
   type = "response",
@@ -222,10 +240,10 @@ tr_df <- transform(df,
   upr = p_df$fit + (1.96 * p_df$se.fit)
 )
 
-spe <- ggplot(tr_df, aes(y = fit, x = max_sumTU_ms)) +
+spe <- ggplot(tr_df, aes(y = fit, x = max_sumTU_ms_corr)) +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.2) +
   geom_line() +
-  geom_point(data = data, aes(y = spe, x = max_sumTU_ms), size = 2) +
+  geom_point(data = data, aes(y = spe, x = max_sumTU_ms_corr), size = 2) +
   labs(
     x = expression("toxicity [max log sum TU]"),
     y = expression("species richness")
@@ -245,24 +263,24 @@ spe
 
 
 #### 4.2 test for abundance #####
-in1.1 <- glm(ind ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "quasipoisson")
+in1.1 <- glm(ind ~ Comp.1 + Comp.2 + max_sumTU_ms_corr + shading, data, family = "quasipoisson")
 summary(in1.1)
 drop1(in1.1, test = "F") #-> exclude Comp.2
 
-in1.2 <- glm(ind ~ Comp.1 + max_sumTU_ms + shading, data, family = "quasipoisson")
+in1.2 <- glm(ind ~ Comp.1 + max_sumTU_ms_corr + shading, data, family = "quasipoisson")
 summary(in1.2)
 drop1(in1.2, test = "F") # exclude shading
 
-in1.3 <- glm(ind ~ Comp.1 + max_sumTU_ms, data, family = "quasipoisson")
+in1.3 <- glm(ind ~ Comp.1 + max_sumTU_ms_corr, data, family = "quasipoisson")
 summary(in1.3)
 drop1(in1.3, test = "F") # exclude Comp.1
 
-in1.4 <- glm(ind ~ max_sumTU_ms, data, family = "quasipoisson")
+in1.4 <- glm(ind ~ max_sumTU_ms_corr, data, family = "quasipoisson")
 summary(in1.4)
-1 - (96.813 / 186.375) # D²=0.4805473
+1 - (113.05 / 186.375) # DÂ² = 0.39
 
-range(data$max_sumTU_ms, na.rm = TRUE)
-df <- data.frame(max_sumTU_ms = seq(-1.591132, 0.047487, length.out = 10))
+range(data$max_sumTU_ms_corr, na.rm = TRUE)
+df <- data.frame(max_sumTU_ms_corr = seq(-1.62549514, -0.01420084, length.out = 10))
 p_df <- predict(in1.4,
   newdata = df,
   type = "response",
@@ -274,10 +292,10 @@ tr_df <- transform(df,
   upr = p_df$fit + (1.96 * p_df$se.fit)
 )
 
-ind <- ggplot(tr_df, aes(y = fit, x = max_sumTU_ms)) +
+ind <- ggplot(tr_df, aes(y = fit, x = max_sumTU_ms_corr)) +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.2) +
   geom_line() +
-  geom_point(data = data, aes(y = ind, x = max_sumTU_ms), size = 2) +
+  geom_point(data = data, aes(y = ind, x = max_sumTU_ms_corr), size = 2) +
   labs(
     x = expression("toxicity [max log sum TU]"),
     y = expression("number of individuals")
@@ -297,21 +315,21 @@ ind <- ggplot(tr_df, aes(y = fit, x = max_sumTU_ms)) +
 ind
 
 #### 4.3 test for size #####
-siz1.1 <- glm(CWM.mKLw ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+siz1.1 <- glm(CWM.mKLw ~ Comp.1 + Comp.2 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(siz1.1)
 drop1(siz1.1, test = "F") #-> exclude Comp.2
 
-siz1.2 <- glm(CWM.mKLw ~ Comp.1 + max_sumTU_ms + shading, data, family = "gaussian")
+siz1.2 <- glm(CWM.mKLw ~ Comp.1 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(siz1.2)
 drop1(siz1.2, test = "F") #-> exclude Comp.1
 
-siz1.3 <- glm(CWM.mKLw ~ max_sumTU_ms + shading, data, family = "gaussian")
+siz1.3 <- glm(CWM.mKLw ~ max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(siz1.3)
 drop1(siz1.3, test = "F") #-> exclude tox
 
 siz1.4 <- glm(CWM.mKLw ~ shading, data, family = "gaussian")
 summary(siz1.4)
-1 - (6.0079 / 9.4986) # D²=0.3674963
+1 - (6.0079 / 9.4986) # DÂ²=0.3674963
 
 range(data$shading, na.rm = TRUE)
 range(data$Comp.2, na.rm = TRUE)
@@ -352,42 +370,42 @@ siz
 
 #### 4.4 test for mobility  #####
 
-bal1.1 <- glm(CWM.Ballon1 ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+bal1.1 <- glm(CWM.Ballon1 ~ Comp.1 + Comp.2 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(bal1.1)
 drop1(bal1.1, test = "F") #-> exclude shading
 
-bal1.2 <- glm(CWM.Ballon1 ~ Comp.1 + Comp.2 + max_sumTU_ms, data, family = "gaussian")
+bal1.2 <- glm(CWM.Ballon1 ~ Comp.1 + Comp.2 + max_sumTU_ms_corr, data, family = "gaussian")
 summary(bal1.2)
 drop1(bal1.2, test = "F") #-> exclude Comp.2
 
-bal1.3 <- glm(CWM.Ballon1 ~ Comp.1 + max_sumTU_ms, data, family = "gaussian")
+bal1.3 <- glm(CWM.Ballon1 ~ Comp.1 + max_sumTU_ms_corr, data, family = "gaussian")
 summary(bal1.3)
 drop1(bal1.3, test = "F") #-> exclude Comp.1
 
-bal1.4 <- glm(CWM.Ballon1 ~ max_sumTU_ms, data, family = "gaussian")
+bal1.4 <- glm(CWM.Ballon1 ~ max_sumTU_ms_corr, data, family = "gaussian")
 summary(bal1.4)
 drop1(bal1.3, test = "F")
-1 - (0.77217 / 0.92828) # D²=0.1681712
+1 - (0.70088  / 0.92828) # DÂ² = 0.245
 
-
+## Update 27 March 2019: Mobility shows now a significant relationship with toxicity
 
 #### 4.5 test for shading preference ####
 
-sha1.1 <- glm(CWM.ShaPosS ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+sha1.1 <- glm(CWM.ShaPosS ~ Comp.1 + Comp.2 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(sha1.1)
 drop1(sha1.1, test = "F") #-> exclude comp.1
 
-sha1.2 <- glm(CWM.ShaPosS ~ Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+sha1.2 <- glm(CWM.ShaPosS ~ Comp.2 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(sha1.2)
 drop1(sha1.2, test = "F") #-> exclude comp.2
 
-sha1.3 <- glm(CWM.ShaPosS ~ max_sumTU_ms + shading, data, family = "gaussian")
+sha1.3 <- glm(CWM.ShaPosS ~ max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(sha1.3)
 drop1(sha1.3, test = "F") #-> exclude tox
 
 sha1.4 <- glm(CWM.ShaPosS ~ shading, data, family = "gaussian")
 summary(sha1.4)
-1 - (0.007834 / 0.014009) # D²=0.4407881
+1 - (0.007834 / 0.014009) # DÂ²=0.4407881
 
 range(data$shading, na.rm = TRUE)
 df <- data.frame(shading = seq(0, 95, length.out = 10)) # ,
@@ -425,29 +443,29 @@ sha <- ggplot(tr_df, aes(y = fit, x = shading)) +
 sha
 
 #### 4.6 test for moisture preference #####
-moi1.1 <- glm(CWM.MoisPosS ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+moi1.1 <- glm(CWM.MoisPosS ~ Comp.1 + Comp.2 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(moi1.1)
 drop1(moi1.1, test = "F") #-> exclude Comp.2
 
-moi1.2 <- glm(CWM.MoisPosS ~ Comp.1 + max_sumTU_ms + shading, data, family = "gaussian")
+moi1.2 <- glm(CWM.MoisPosS ~ Comp.1 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(moi1.2)
 drop1(moi1.2, test = "F") #-> exclude Comp.1
 
-moi1.3 <- glm(CWM.MoisPosS ~ max_sumTU_ms + shading, data, family = "gaussian")
+moi1.3 <- glm(CWM.MoisPosS ~ max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(moi1.3)
-drop1(moi1.3, test = "F") #-> exclude max_sumTU_ms
+drop1(moi1.3, test = "F") #-> exclude max_sumTU_ms_corr
 
 moi1.4 <- glm(CWM.MoisPosS ~ shading, data, family = "gaussian")
 summary(moi1.4)
-1 - (0.017706 / 0.020364) # D²=0.1305245
+1 - (0.017706 / 0.020364) # DÂ²=0.1305245
 
 
 #### 4.7 test for specilisation ####
-nic1.1 <- glm(CWM.Niche ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+nic1.1 <- glm(CWM.Niche ~ Comp.1 + Comp.2 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(nic1.1)
 drop1(nic1.1, test = "F") #-> exclude shading
 
-nic1.2 <- glm(CWM.Niche ~ Comp.2 + max_sumTU_ms + Comp.1, data, family = "gaussian")
+nic1.2 <- glm(CWM.Niche ~ Comp.2 + max_sumTU_ms_corr + Comp.1, data, family = "gaussian")
 summary(nic1.2)
 drop1(nic1.2, test = "F") #-> exclude tox
 
@@ -457,10 +475,10 @@ drop1(nic1.3, test = "F") #-> exclude Comp.1
 
 nic1.4 <- glm(CWM.Niche ~ Comp.2, data, family = "gaussian")
 summary(nic1.4)
-1 - (0.00091742 / 0.00133139) # D²=0.3109307
+1 - (0.00091742 / 0.00133139) # DÂ²=0.3109307
 
 summary(glm(CWM.Niche ~ CWM.Ballon1, data, family = "gaussian"))
-1 - (0.00095269 / 0.00133139) # D²=0.2844396
+1 - (0.00095269 / 0.00133139) # DÂ²=0.2844396
 
 summary(glm(CWM.Niche ~ no3, data, family = "gaussian"))
 summary(glm(CWM.Niche ~ po4, data, family = "gaussian"))
@@ -502,22 +520,22 @@ nic
 
 #### 4.8 test for web  builder  #####
 
-web1.1 <- glm(CWM.web1 ~ Comp.1 + Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+web1.1 <- glm(CWM.web1 ~ Comp.1 + Comp.2 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(web1.1)
 drop1(web1.1, test = "F") #-> exclude Comp.1
 
-web1.2 <- glm(CWM.web1 ~ Comp.2 + max_sumTU_ms + shading, data, family = "gaussian")
+web1.2 <- glm(CWM.web1 ~ Comp.2 + max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(web1.2)
 drop1(web1.2, test = "F") #-> exclude Comp.2
 
-web1.3 <- glm(CWM.web1 ~ max_sumTU_ms + shading, data, family = "gaussian")
+web1.3 <- glm(CWM.web1 ~ max_sumTU_ms_corr + shading, data, family = "gaussian")
 summary(web1.3)
 drop1(web1.3, test = "F") #-> exclude tox
 
 web1.4 <- glm(CWM.web1 ~ shading, data, family = "gaussian")
 summary(web1.4)
 drop1(web1.4, test = "F")
-1 - (0.56494 / 0.87031) # D²=0.350875
+1 - (0.56494 / 0.87031) # DÂ²=0.350875
 
 range(data$shading, na.rm = TRUE)
 df <- data.frame(shading = seq(0, 95, length.out = 10)) # ,
@@ -562,4 +580,3 @@ res <- plot_grid(spe, ind, siz, sha, nic, web,
   align = "v", nrow = 3, ncol = 2
 )
 res
-
